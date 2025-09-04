@@ -8,6 +8,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import LandingPage from "./pages/public/LandingPage";
 import LoginPage from "./pages/public/LoginPage";
 import OtpVerificationPage from "./pages/public/OtpVerificationPage";
+import GoogleAuthCallback from "./pages/public/GoogleAuthCallback";
 import PatientDashboardPage from "./pages/patient/PatientDashboardPage";
 import FindDoctorPage from "./pages/patient/FindDoctorPage";
 import BookAppointmentPage from "./pages/patient/BookAppointmentPage";
@@ -49,6 +50,7 @@ const App = () => {
               <Route path="/" element={isAuthenticated && user ? <Navigate to={user.role === 'doctor' ? '/doctor/dashboard' : '/patient/dashboard'} replace /> : <LandingPage />} />
               <Route path="/login" element={isAuthenticated && user ? <Navigate to={user.role === 'doctor' ? '/doctor/dashboard' : '/patient/dashboard'} replace /> : <LoginPage />} />
               <Route path="/otp-verification" element={isAuthenticated && user ? <Navigate to={user.role === 'doctor' ? '/doctor/dashboard' : '/patient/dashboard'} replace /> : <OtpVerificationPage />} />
+              <Route path="/auth/callback" element={<GoogleAuthCallback />} />
 
               {/* Protected Patient Routes */}
               <Route path="/patient/dashboard" element={<ProtectedRoute allowedRoles={['patient']}><PatientDashboardPage /></ProtectedRoute>} />

@@ -6,11 +6,19 @@ const UserSchema = new Schema({
         type: String,
         trim: true
     },
+    email: {
+        type: String,
+        trim: true,
+        lowercase: true
+    },
     mobile: {
         type: String,
-        required: true,
-        unique: true,
         trim: true
+    },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true
     },
     role: {
         type: String,
@@ -33,7 +41,8 @@ const UserSchema = new Schema({
     profile: {
         age: { type: Number },
         gender: { type: String, enum: ['Male', 'Female', 'Other'] },
-        specialty: { type: String } // Primarily for doctors
+        specialty: { type: String }, // Primarily for doctors
+        avatar: { type: String } // Profile picture URL
     }
 }, { timestamps: true });
 
