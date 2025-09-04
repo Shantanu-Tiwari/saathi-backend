@@ -75,10 +75,13 @@ class ApiClient {
   }
 
   async verifyOTP(mobile: string, otp: string) {
-    return this.request('/auth/verify-otp', {
+    console.log('🔧 API Client: verifyOTP called with:', { mobile, otp });
+    const result = this.request('/auth/verify-otp', {
       method: 'POST',
       body: JSON.stringify({ mobile: `+91${mobile}`, otp }),
     });
+    console.log('🔧 API Client: verifyOTP result:', result);
+    return result;
   }
 
   // User endpoints

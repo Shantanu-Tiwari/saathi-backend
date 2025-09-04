@@ -49,16 +49,27 @@ const OtpVerificationPage = () => {
       return;
     }
 
+    console.log('🚀 Starting OTP verification for:', phoneNumber);
     setIsLoading(true);
 
     try {
+      console.log('📞 Calling verifyOTP from useAuth hook...');
       const response = await verifyOTP(phoneNumber, otp);
+      console.log('📞 verifyOTP response:', response);
 
       if (response.success) {
         localStorage.removeItem('temp-phone');
         toast.success('लॉगिन सफल!');
+        console.log('✅ OTP verification successful, should redirect now');
+        
+        // Force navigation to patient dashboard
+        setTimeout(() => {
+          console.log('🔄 Navigating to patient dashboard...');
+          navigate('/patient/dashboard', { replace: true });
+        }, 1000);
       } else {
         toast.error(response.error || 'गलत OTP। कृपया फिर कोशिश करें।');
+        console.log('❌ OTP verification failed:', response.error);
       }
     } catch (error) {
       console.error('OTP Verification Error:', error);

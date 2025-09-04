@@ -89,6 +89,7 @@ interface User {
 }
 
 export function useAuth() {
+  console.log('🔄 useAuth hook initialized - NEW VERSION LOADED');
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
