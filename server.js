@@ -11,7 +11,7 @@ import appointmentRoutes from './routes/appointments.js';
 import prescriptionRoutes from './routes/prescription.js'; // New line
 import pharmacyRoutes from "./routes/pharmacyRoutes.js";
 import healthRecordRoutes from "./routes/healthRecordRoutes.js";
-
+import {scheduleAppointmentAlerts} from "./controllers/alertController.js";
 // Initialize Express app
 const app = express();
 
@@ -26,6 +26,8 @@ app.use(express.json());
 app.get('/', (req, res) => {
     res.send('Sehat Saathi API is running...');
 });
+
+scheduleAppointmentAlerts();
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
