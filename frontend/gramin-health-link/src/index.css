@@ -1,0 +1,311 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Sehat Saathi - Rural Healthcare Design System 
+   Optimized for Indian rural users with high contrast and accessibility
+   All colors MUST be HSL for proper theming
+*/
+
+@layer base {
+  :root {
+    /* Core brand colors for healthcare trust */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 13%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 13%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 13%;
+
+    /* Medical green - primary brand color for trust & health */
+    --primary: 168 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 168 76% 85%;
+    --primary-dark: 168 76% 28%;
+
+    /* Medical blue - reliability & professionalism */
+    --secondary: 207 90% 54%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-light: 207 90% 85%;
+
+    /* Warm saffron - Indian cultural identity */
+    --accent: 38 92% 50%;
+    --accent-foreground: 0 0% 13%;
+    --accent-light: 38 92% 85%;
+
+    /* Emergency red - critical situations */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --emergency: 0 100% 50%;
+    --emergency-foreground: 0 0% 100%;
+
+    /* Success green - appointments, confirmations */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --success-light: 142 76% 85%;
+
+    /* Warning amber - low stock, cautions */
+    --warning: 43 96% 56%;
+    --warning-foreground: 0 0% 13%;
+    --warning-light: 43 96% 85%;
+
+    /* Neutral grays for rural-friendly contrast */
+    --muted: 210 14% 97%;
+    --muted-foreground: 215 25% 27%;
+    --border: 210 14% 89%;
+    --input: 210 14% 89%;
+    --ring: 168 76% 36%;
+
+    /* High contrast mode support */
+    --high-contrast-bg: 0 0% 0%;
+    --high-contrast-text: 0 0% 100%;
+    --focus-ring: 207 90% 54%;
+
+    /* Semantic spacing for rural touch targets */
+    --touch-sm: 44px;
+    --touch-md: 56px;
+    --touch-lg: 64px;
+
+    --radius: 0.75rem;
+    --radius-sm: 0.5rem;
+    --radius-lg: 1rem;
+
+    /* Typography scale optimized for Indian scripts */
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1.125rem;
+    --text-lg: 1.25rem;
+    --text-xl: 1.5rem;
+    --text-2xl: 2rem;
+
+    /* Custom gradients for visual appeal */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-dark)));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(142 76% 28%));
+    --gradient-emergency: linear-gradient(135deg, hsl(var(--emergency)), hsl(0 100% 40%));
+
+    /* Shadows for depth and trust */
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.1);
+    --shadow-medical: 0 10px 30px -10px hsl(var(--primary) / 0.3);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 168 76% 36%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 168 76% 36%;
+  }
+
+  .dark {
+    /* Dark mode - still prioritizing readability for rural users */
+    --background: 0 0% 13%;
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 13%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 13%;
+    --popover-foreground: 0 0% 100%;
+
+    /* Maintain healthcare colors in dark mode */
+    --primary: 168 76% 42%;
+    --primary-foreground: 0 0% 13%;
+    --primary-light: 168 76% 25%;
+    --primary-dark: 168 76% 35%;
+
+    --secondary: 207 90% 60%;
+    --secondary-foreground: 0 0% 13%;
+    --secondary-light: 207 90% 25%;
+
+    --accent: 38 92% 55%;
+    --accent-foreground: 0 0% 13%;
+    --accent-light: 38 92% 25%;
+
+    --success: 142 76% 42%;
+    --success-foreground: 0 0% 13%;
+    --success-light: 142 76% 25%;
+
+    --warning: 43 96% 62%;
+    --warning-foreground: 0 0% 13%;
+    --warning-light: 43 96% 25%;
+
+    --emergency: 0 100% 55%;
+    --emergency-foreground: 0 0% 13%;
+
+    --destructive: 0 84% 65%;
+    --destructive-foreground: 0 0% 13%;
+
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 70%;
+    --border: 0 0% 25%;
+    --input: 0 0% 25%;
+    --ring: 168 76% 42%;
+
+    --sidebar-background: 0 0% 10%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 168 76% 42%;
+    --sidebar-primary-foreground: 0 0% 13%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 168 76% 42%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', 'Noto Sans Devanagari', system-ui, sans-serif;
+    font-size: var(--text-base);
+    line-height: 1.6;
+  }
+
+  /* High contrast mode for rural visibility */
+  .high-contrast {
+    --background: var(--high-contrast-bg);
+    --foreground: var(--high-contrast-text);
+  }
+}
+
+@layer components {
+  /* Emergency button - always prominent and accessible */
+  .btn-emergency {
+    @apply bg-gradient-to-br from-red-500 to-red-600 text-white font-semibold;
+    @apply min-h-[var(--touch-lg)] px-6 rounded-lg shadow-lg;
+    @apply transform transition-all duration-200 hover:scale-105 active:scale-95;
+    @apply focus:ring-4 focus:ring-red-200 focus:outline-none;
+  }
+
+  /* Primary healthcare action buttons */
+  .btn-medical {
+    @apply bg-gradient-to-br from-primary to-primary-dark text-primary-foreground;
+    @apply min-h-[var(--touch-md)] px-6 py-3 rounded-lg font-medium;
+    @apply shadow-medical transform transition-all duration-200;
+    @apply hover:shadow-lg hover:scale-105 active:scale-95;
+    @apply focus:ring-4 focus:ring-primary/20 focus:outline-none;
+  }
+
+  /* Success action buttons (appointments, confirmations) */
+  .btn-success {
+    @apply bg-gradient-to-br from-success to-green-600 text-success-foreground;
+    @apply min-h-[var(--touch-md)] px-6 py-3 rounded-lg font-medium;
+    @apply shadow-md transform transition-all duration-200;
+    @apply hover:shadow-lg hover:scale-105 active:scale-95;
+    @apply focus:ring-4 focus:ring-success/20 focus:outline-none;
+  }
+
+  /* Warning buttons (low stock, cautions) */
+  .btn-warning {
+    @apply bg-gradient-to-br from-warning to-yellow-500 text-warning-foreground;
+    @apply min-h-[var(--touch-md)] px-6 py-3 rounded-lg font-medium;
+    @apply shadow-md transform transition-all duration-200;
+    @apply hover:shadow-lg hover:scale-105 active:scale-95;
+    @apply focus:ring-4 focus:ring-warning/20 focus:outline-none;
+  }
+
+  /* Large touch-friendly cards for rural users */
+  .card-rural {
+    @apply bg-card border border-border rounded-lg p-6;
+    @apply shadow-md hover:shadow-lg transition-shadow duration-200;
+    @apply min-h-[var(--touch-lg)] cursor-pointer;
+  }
+
+  /* Healthcare professional cards */
+  .card-doctor {
+    @apply card-rural hover:border-primary/30 hover:shadow-medical;
+    @apply transform transition-all duration-200 hover:scale-102;
+  }
+
+  /* Emergency contact cards */
+  .card-emergency {
+    @apply bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800;
+    @apply rounded-lg p-4 shadow-md hover:shadow-lg transition-all duration-200;
+  }
+
+  /* Form inputs optimized for mobile */
+  .input-rural {
+    @apply w-full min-h-[var(--touch-sm)] px-4 py-3 text-base;
+    @apply bg-input border border-border rounded-lg;
+    @apply focus:ring-2 focus:ring-primary/20 focus:border-primary;
+    @apply transition-colors duration-200;
+  }
+
+  /* Large text for readability */
+  .text-rural-lg {
+    @apply text-lg md:text-xl font-medium leading-relaxed;
+  }
+
+  /* Rural-friendly navigation */
+  .nav-rural {
+    @apply flex items-center justify-center min-h-[var(--touch-md)];
+    @apply px-4 py-2 rounded-lg transition-colors duration-200;
+    @apply hover:bg-primary/10 active:bg-primary/20;
+  }
+
+  /* Appointment status indicators */
+  .status-confirmed {
+    @apply bg-success/10 text-success border border-success/20 px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .status-pending {
+    @apply bg-warning/10 text-warning border border-warning/20 px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .status-cancelled {
+    @apply bg-destructive/10 text-destructive border border-destructive/20 px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  /* Loading states for poor connectivity */
+  .skeleton-rural {
+    @apply animate-pulse bg-muted rounded-lg;
+  }
+
+  /* Accessibility helpers */
+  .sr-only-rural {
+    @apply sr-only;
+  }
+
+  /* Focus states for keyboard navigation */
+  .focus-rural {
+    @apply focus:ring-4 focus:ring-primary/20 focus:outline-none focus:border-primary;
+  }
+}
+
+@layer utilities {
+  /* Touch target utilities */
+  .touch-sm { min-height: var(--touch-sm); min-width: var(--touch-sm); }
+  .touch-md { min-height: var(--touch-md); min-width: var(--touch-md); }
+  .touch-lg { min-height: var(--touch-lg); min-width: var(--touch-lg); }
+
+  /* Text size utilities for Indian scripts */
+  .text-rural-xs { font-size: var(--text-xs); }
+  .text-rural-sm { font-size: var(--text-sm); }
+  .text-rural-base { font-size: var(--text-base); }
+  .text-rural-lg { font-size: var(--text-lg); }
+  .text-rural-xl { font-size: var(--text-xl); }
+  .text-rural-2xl { font-size: var(--text-2xl); }
+
+  /* Gradient utilities */
+  .bg-gradient-medical { background: var(--gradient-primary); }
+  .bg-gradient-success { background: var(--gradient-success); }
+  .bg-gradient-emergency { background: var(--gradient-emergency); }
+
+  /* Shadow utilities */
+  .shadow-medical { box-shadow: var(--shadow-medical); }
+
+  /* Transform utilities for interactions */
+  .scale-102 { transform: scale(1.02); }
+  .scale-105 { transform: scale(1.05); }
+}
