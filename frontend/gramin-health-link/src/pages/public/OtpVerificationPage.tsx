@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 
 const OtpVerificationPage = () => {
+  console.log('🚀 OtpVerificationPage loaded - NEW VERSION', new Date().toISOString());
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { verifyOTP, requestOTP } = useAuth();
