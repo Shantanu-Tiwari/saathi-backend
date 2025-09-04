@@ -22,6 +22,9 @@ const queryClient = new QueryClient();
 
 const App = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
+  
+  // Debug logging
+  console.log('🏠 App render - Auth state:', { isAuthenticated, isLoading, user });
 
   if (isLoading) {
     return (

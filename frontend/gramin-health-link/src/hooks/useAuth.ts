@@ -118,11 +118,24 @@ export function useAuth() {
     }
   }, []);
 
-  const login = useCallback((token: string) => {
+  const login = useCallback((token: string, userData?: User) => {
+    console.log('🔑 Login called with token and userData:', { token: token.substring(0, 20) + '...', userData });
     apiClient.setToken(token);
     setToken(token);
-    const decodedUser = decodeAndSetUser(token);
-    return decodedUser;
+    
+    if (userData) {
+      // Use provided user data
+      console.log('👤 Setting user from provided data:', userData);
+      setUser(userData);
+      setIsAuthenticated(true);
+      console.log('✅ Authentication state updated');
+      return userData;
+    } else {
+      // Try to decode from JWT (fallback)
+      console.log('🔍 Decoding user from JWT token');
+      const decodedUser = decodeAndSetUser(token);
+      return decodedUser;
+    }
   }, [decodeAndSetUser]);
 
   const requestOTP = useCallback(async (mobile: string) => {
@@ -130,22 +143,72 @@ export function useAuth() {
   }, []);
 
   const verifyOTP = useCallback(async (mobile: string, otp: string) => {
+    console.log('🔐 Verifying OTP for:', mobile);
     const response = await apiClient.verifyOTP(mobile, otp);
+    console.log('🔐 OTP Verification Response:', response);
+    
     if (response.success && response.data?.token) {
-      login(response.data.token);
+      console.log('✅ OTP verification successful, token received');
+      
+      // Set user data from the response (not from JWT)
+      if (response.data.user) {
+        const userData = {
+          id: response.data.user.id,
+          phone: mobile, // Use the mobile from the request
+          name: response.data.user.name,
+          role: response.data.user.role
+        };
+        console.log('👤 Setting user data:', userData);
+        login(response.data.token, userData);
+        console.log('🎉 Login completed successfully');
+      } else {
+        console.log('⚠️ No user data in response, falling back to JWT decoding');
+        // Fallback to JWT decoding if no user data
+        login(response.data.token);
+      }
+    } else {
+      console.log('❌ OTP verification failed:', response.error);
     }
     return response;
   }, [login]);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('sehat-saathi-token');
-    if (storedToken) {
-      setToken(storedToken);
-      apiClient.setToken(storedToken);
-      decodeAndSetUser(storedToken);
-    }
-    setIsLoading(false);
-  }, [decodeAndSetUser]);
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem('sehat-saathi-token');
+      if (storedToken) {
+        setToken(storedToken);
+        apiClient.setToken(storedToken);
+        
+        try {
+          // Try to decode the token to get user ID
+          const decoded = jwtDecode(storedToken);
+          if (decoded.id) {
+            // Fetch user data from backend
+            const response = await apiClient.getMe();
+            if (response.success && response.data) {
+              const userData = {
+                id: response.data._id || response.data.id,
+                phone: response.data.phone,
+                name: response.data.name,
+                role: response.data.role
+              };
+              setUser(userData);
+              setIsAuthenticated(true);
+            } else {
+              // If fetching user data fails, clear the token
+              logout();
+            }
+          }
+        } catch (error) {
+          console.error('Error initializing auth:', error);
+          logout();
+        }
+      }
+      setIsLoading(false);
+    };
+
+    initializeAuth();
+  }, [logout]);
 
   return {
     user,
