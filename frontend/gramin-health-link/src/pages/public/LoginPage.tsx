@@ -12,7 +12,7 @@ import GoogleSignIn from '@/components/GoogleSignIn';
 const LoginPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { requestOTP, login } = useAuth();
+  const { requestOTP, loginWithGoogle } = useAuth();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -21,41 +21,23 @@ const LoginPage = () => {
   const handleGoogleSignIn = async (credential: string) => {
     setIsGoogleLoading(true);
     try {
-      // Send the credential to your backend for verification
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/google/verify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ credential }),
-      });
-
-      const data = await response.json();
-
-
-      if (response.ok && data.token) {
-        const userData = {
-          id: data.user.id,
-          name: data.user.name,
-          email: data.user.email,
-          role: data.user.role,
-          avatar: data.user.avatar,
-        };
-
-        login(data.token, userData);
+      const response = await loginWithGoogle(credential);
+      
+      if (response.success && response.data?.user) {
+        toast.success('Successfully signed in with Google!');
         
         // Redirect based on role
-        const redirectPath = userData.role === 'doctor' 
+        const redirectPath = response.data.user.role === 'doctor' 
           ? '/doctor/dashboard' 
           : '/patient/dashboard';
         navigate(redirectPath, { replace: true });
       } else {
-        throw new Error(data.message || 'Google authentication failed');
+        throw new Error(response.error || 'Google authentication failed');
       }
-    } catch (error:any) {
+    } catch (error: any) {
       console.error('Google Sign-In Error:', error);
-      toast.error('Google Sign-In failed. Please try again.');
-    }  finally {
+      toast.error(error.message || 'Google Sign-In failed. Please try again.');
+    } finally {
       setIsGoogleLoading(false);
     }
   };

@@ -3,6 +3,9 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import 'dotenv/config';
+import { OAuth2Client } from 'google-auth-library';
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Configure Google OAuth Strategy
 passport.use(new GoogleStrategy({
@@ -160,6 +163,104 @@ export const protect = async (req, res, next) => {
         next();
     } catch (error) {
         return res.status(401).json({ message: 'Invalid or expired token.' });
+    }
+};
+
+// Google JWT Credential Verification (for Google Sign-In button)
+export const verifyGoogleCredential = async (req, res) => {
+    try {
+        const { credential } = req.body;
+        
+        if (!credential) {
+            return res.status(400).json({ message: 'Google credential is required' });
+        }
+
+        // Verify the credential with Google
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+        if (!payload) {
+            return res.status(400).json({ message: 'Invalid Google credential' });
+        }
+
+        const { sub: googleId, email, name, picture } = payload;
+
+        // Check if user already exists with this Google ID
+        let user = await User.findOne({ googleId });
+        
+        if (user) {
+            // User exists, generate token and return
+            const token = signToken(user.id);
+            return res.status(200).json({
+                success: true,
+                token,
+                user: {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    avatar: user.profile?.avatar
+                }
+            });
+        }
+        
+        // Check if user exists with same email
+        user = await User.findOne({ email });
+        
+        if (user) {
+            // Link Google account to existing user
+            user.googleId = googleId;
+            user.profile = user.profile || {};
+            user.profile.avatar = picture;
+            await user.save();
+            
+            const token = signToken(user.id);
+            return res.status(200).json({
+                success: true,
+                token,
+                user: {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    avatar: user.profile?.avatar
+                }
+            });
+        }
+        
+        // Create new user
+        user = await User.create({
+            googleId,
+            name,
+            email,
+            profile: {
+                avatar: picture
+            },
+            role: 'patient' // Default role
+        });
+        
+        const token = signToken(user.id);
+        return res.status(201).json({
+            success: true,
+            token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                avatar: user.profile?.avatar
+            }
+        });
+        
+    } catch (error) {
+        console.error('Google credential verification error:', error);
+        return res.status(500).json({ 
+            message: 'Failed to verify Google credential',
+            error: error.message 
+        });
     }
 };
 

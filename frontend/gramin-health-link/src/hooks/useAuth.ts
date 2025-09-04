@@ -85,7 +85,9 @@ interface User {
   id: string;
   phone: string;
   name?: string;
+  email?: string;
   role: 'patient' | 'doctor' | 'pharmacist';
+  avatar?: string;
 }
 
 export function useAuth() {
@@ -173,6 +175,32 @@ export function useAuth() {
     return response;
   }, [login]);
 
+  const loginWithGoogle = useCallback(async (credential: string) => {
+    console.log('🔑 Logging in with Google credential');
+    const response = await apiClient.verifyGoogleCredential(credential);
+    console.log('🔑 Google Login Response:', response);
+    
+    if (response.success && response.data?.token) {
+      console.log('✅ Google login successful, token received');
+      
+      const userData = {
+        id: response.data.user.id,
+        phone: response.data.user.phone || '',
+        name: response.data.user.name,
+        email: response.data.user.email,
+        role: response.data.user.role,
+        avatar: response.data.user.avatar
+      };
+      
+      console.log('👤 Setting Google user data:', userData);
+      login(response.data.token, userData);
+      console.log('🎉 Google login completed successfully');
+    } else {
+      console.log('❌ Google login failed:', response.error);
+    }
+    return response;
+  }, [login]);
+
   useEffect(() => {
     const initializeAuth = async () => {
       const storedToken = localStorage.getItem('sehat-saathi-token');
@@ -220,5 +248,6 @@ export function useAuth() {
     logout,
     requestOTP,
     verifyOTP,
+    loginWithGoogle,
   };
 }

@@ -84,6 +84,14 @@ class ApiClient {
     return result;
   }
 
+  // Google Authentication
+  async verifyGoogleCredential(credential: string) {
+    return this.request('/auth/google/verify', {
+      method: 'POST',
+      body: JSON.stringify({ credential }),
+    });
+  }
+
   // User endpoints
   async getMe() {
     return this.request('/users/me');
