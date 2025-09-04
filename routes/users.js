@@ -12,6 +12,6 @@ router.route('/me')
 // The new endpoint for doctors to submit credentials
 // The request must be a POST with form-data and a file named "credentials"
 router.route('/submit-credentials')
-    .post(protect, restrictTo('doctor'), uploadCredentials, submitCredentials);
+    .post(protect, uploadCredentials, submitCredentials);
 
 export default router;
