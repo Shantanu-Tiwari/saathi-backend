@@ -1,4 +1,4 @@
-import Prescription from '../models/Prescription.js';
+import Prescription from '../models/Prescriptions.js';
 import Appointment from '../models/Appointment.js';
 
 export const createPrescription = async (req, res) => {
