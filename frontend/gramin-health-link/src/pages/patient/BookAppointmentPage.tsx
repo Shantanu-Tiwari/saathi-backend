@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useDoctorDetails, useDoctorSchedule } from '@/hooks/useDoctors';
+import { useBookAppointment } from '@/hooks/useAppointments';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
@@ -20,128 +21,58 @@ const BookAppointmentPage = () => {
   const [searchParams] = useSearchParams();
   const doctorId = searchParams.get('doctorId');
 
-  const [doctorData, setDoctorData] = useState(null);
+  const { data: doctorData, isLoading: doctorLoading, error: doctorError } = useDoctorDetails(doctorId || '');
+  const { data: scheduleData } = useDoctorSchedule();
+  const bookAppointmentMutation = useBookAppointment();
+
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState('');
   const [symptoms, setSymptoms] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [isBooking, setIsBooking] = useState(false);
-  const [error, setError] = useState(null);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [bookedSlots, setBookedSlots] = useState([]);
 
-  const { token } = useAuth();
-  const API_URL = import.meta.env.VITE_API_URL;
-
-  // --- 1. Fetch Doctor's Details ---
+  // Mock available slots for now - in real implementation, this would come from the API
   useEffect(() => {
-    const fetchDoctorDetails = async () => {
-      if (!doctorId) {
-        setError("Doctor ID not found.");
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch(`${API_URL}/api/v1/doctors/${doctorId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || 'Failed to fetch doctor details.');
-        }
-
-        setDoctorData(data.doctor);
-      } catch (err) {
-        console.error("Fetch Error:", err);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (token) {
-      fetchDoctorDetails();
+    if (selectedDate) {
+      // Mock slots - replace with actual API call
+      setAvailableSlots(['09:00', '10:00', '11:00', '14:00', '15:00', '16:00']);
+      setBookedSlots(['10:00', '15:00']); // Mock booked slots
     }
-  }, [doctorId, token]);
+  }, [selectedDate]);
 
-  // --- 2. Fetch Available Slots for the selected date ---
-  useEffect(() => {
-    const fetchSlots = async () => {
-      if (!doctorData || !selectedDate) return;
-
-      try {
-        const dateString = selectedDate.toISOString().split('T')[0];
-        const response = await fetch(`${API_URL}/api/v1/doctors/${doctorId}/availability?date=${dateString}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || 'Failed to fetch slots.');
-        }
-
-        setAvailableSlots(data.availableSlots);
-        setBookedSlots(data.bookedSlots);
-      } catch (err) {
-        console.error("Slots API Error:", err);
-      }
-    };
-
-    if (token) {
-      fetchSlots();
-    }
-  }, [doctorData, selectedDate, token]);
-
-  // --- 3. Booking the Appointment ---
   const handleBookAppointment = async () => {
     if (!selectedDate || !selectedTime) {
       toast.error('Please select date and time');
       return;
     }
 
-    setIsBooking(true);
-
-    try {
-      const response = await fetch(`${API_URL}/api/v1/appointments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          doctorId: doctorId,
-          date: selectedDate.toISOString(),
-          time: selectedTime,
-          symptoms: symptoms
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to book appointment.');
-      }
-
-      toast.success('Appointment booked successfully!');
-      navigate('/patient/appointments');
-
-    } catch (error) {
-      console.error('Booking Error:', error);
-      toast.error(error.message || 'Failed to book appointment. Please try again.');
-
-    } finally {
-      setIsBooking(false);
+    if (!doctorId) {
+      toast.error('Doctor ID not found');
+      return;
     }
+
+    bookAppointmentMutation.mutate({
+      doctorId: doctorId,
+      date: selectedDate.toISOString(),
+      time: selectedTime,
+      symptoms: symptoms
+    }, {
+      onSuccess: () => {
+        navigate('/patient/appointments');
+      }
+    });
   };
 
-  if (isLoading) {
+  if (doctorLoading) {
     return <div className="flex justify-center items-center min-h-screen">Loading doctor details...</div>;
   }
 
-  if (error) {
-    return <div className="flex justify-center items-center min-h-screen text-red-500">Error: {error}</div>;
+  if (doctorError) {
+    return <div className="flex justify-center items-center min-h-screen text-red-500">Error: {doctorError.message}</div>;
+  }
+
+  if (!doctorId) {
+    return <div className="flex justify-center items-center min-h-screen text-red-500">Doctor ID not found</div>;
   }
 
   return (
@@ -319,11 +250,11 @@ const BookAppointmentPage = () => {
                   <div className="pt-4 border-t">
                     <Button
                         onClick={handleBookAppointment}
-                        disabled={isBooking}
+                        disabled={bookAppointmentMutation.isPending}
                         className="w-full"
                         size="lg"
                     >
-                      {isBooking ? 'Booking...' : `Book Appointment - ₹${doctorData.consultationFee}`}
+                      {bookAppointmentMutation.isPending ? 'Booking...' : `Book Appointment - ₹${doctorData?.consultationFee}`}
                     </Button>
                   </div>
                 </CardContent>

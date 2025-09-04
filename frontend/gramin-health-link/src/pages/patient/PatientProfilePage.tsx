@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserProfile, useUpdateUserProfile } from '@/hooks/useUser';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,11 +23,11 @@ import { toast } from 'sonner';
 
 const PatientProfilePage = () => {
   const navigate = useNavigate();
-  const { user, token, logout } = useAuth(); // Assuming useAuth provides the token
+  const { user, logout } = useAuth();
+  const { data: userProfile, isLoading, error } = useUserProfile();
+  const updateProfileMutation = useUpdateUserProfile();
+  
   const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   const [patientData, setPatientData] = useState({
     name: '',
@@ -43,86 +44,33 @@ const PatientProfilePage = () => {
     currentMedications: ''
   });
 
-  const API_URL = import.meta.env.VITE_API_URL;
-
-  // --- Fetching Patient Data ---
+  // Update patient data when user profile is loaded
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/v1/users/me`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || 'Failed to fetch user data.');
-        }
-
-        // Map backend data to frontend state
-        setPatientData({
-          name: data.user.name || '',
-          phone: data.user.phone || '',
-          email: data.user.email || '',
-          dateOfBirth: data.user.dateOfBirth || '',
-          gender: data.user.gender || '',
-          bloodGroup: data.user.bloodGroup || '',
-          address: data.user.address || '',
-          emergencyContact: data.user.emergencyContact || '',
-          emergencyContactName: data.user.emergencyContactName || '',
-          medicalHistory: data.user.medicalHistory || '',
-          allergies: data.user.allergies || '',
-          currentMedications: data.user.currentMedications || ''
-        });
-      } catch (err) {
-        console.error("Fetch API Error:", err);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (token) {
-      fetchUserData();
-    } else {
-      // Handle case where no token is present
-      setIsLoading(false);
-      setError("You are not logged in.");
-    }
-
-  }, [token]);
-
-
-  // --- Saving Updated Data ---
-  const handleSave = async () => {
-    setIsSaving(true);
-
-    try {
-      const response = await fetch(`${API_URL}/api/v1/users/me`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(patientData)
+    if (userProfile) {
+      setPatientData({
+        name: userProfile.name || '',
+        phone: userProfile.phone || '',
+        email: userProfile.email || '',
+        dateOfBirth: userProfile.dateOfBirth || '',
+        gender: userProfile.gender || '',
+        bloodGroup: userProfile.bloodGroup || '',
+        address: userProfile.address || '',
+        emergencyContact: userProfile.emergencyContact || '',
+        emergencyContactName: userProfile.emergencyContactName || '',
+        medicalHistory: userProfile.medicalHistory || '',
+        allergies: userProfile.allergies || '',
+        currentMedications: userProfile.currentMedications || ''
       });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to update profile.');
-      }
-
-      toast.success('Profile updated successfully!');
-      setIsEditing(false);
-
-    } catch (error) {
-      console.error("Save API Error:", error);
-      toast.error(error.message || 'Failed to save changes. Please try again.');
-
-    } finally {
-      setIsSaving(false);
     }
+  }, [userProfile]);
+
+
+  const handleSave = async () => {
+    updateProfileMutation.mutate(patientData, {
+      onSuccess: () => {
+        setIsEditing(false);
+      }
+    });
   };
 
   const handleInputChange = (field, value) => {
@@ -137,7 +85,7 @@ const PatientProfilePage = () => {
   }
 
   if (error) {
-    return <div className="flex justify-center items-center min-h-screen text-red-500">Error: {error}</div>;
+    return <div className="flex justify-center items-center min-h-screen text-red-500">Error: {error.message}</div>;
   }
 
   return (
@@ -164,16 +112,16 @@ const PatientProfilePage = () => {
                     <Button
                         variant="outline"
                         onClick={() => setIsEditing(false)}
-                        disabled={isSaving}
+                        disabled={updateProfileMutation.isPending}
                     >
                       Cancel
                     </Button>
                     <Button
                         onClick={handleSave}
-                        disabled={isSaving}
+                        disabled={updateProfileMutation.isPending}
                     >
                       <Save className="h-4 w-4 mr-1" />
-                      {isSaving ? 'Saving...' : 'Save Changes'}
+                      {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
                     </Button>
                   </>
               ) : (

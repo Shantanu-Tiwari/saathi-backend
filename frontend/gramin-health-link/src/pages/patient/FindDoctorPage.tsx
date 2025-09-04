@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useDoctors } from '@/hooks/useDoctors';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,43 +17,10 @@ import {
 
 const FindDoctorPage = () => {
   const navigate = useNavigate();
-  const { token } = useAuth(); // Assuming the useAuth hook provides a token
+  const { data: doctors = [], isLoading, error } = useDoctors();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('all');
-  const [doctors, setDoctors] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const API_URL = import.meta.env.VITE_API_URL;
-
-  useEffect(() => {
-    const fetchDoctors = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/v1/doctors`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || 'Failed to fetch doctors.');
-        }
-
-        setDoctors(data.doctors);
-      } catch (err) {
-        console.error('API Error:', err);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (token) {
-      fetchDoctors();
-    }
-  }, [token]);
 
   const specialties = [
     { value: 'all', label: 'All' },
@@ -88,7 +55,7 @@ const FindDoctorPage = () => {
   if (error) {
     return (
         <div className="flex justify-center items-center min-h-screen">
-          <p className="text-red-500">Error: {error}</p>
+          <p className="text-red-500">Error: {error.message}</p>
         </div>
     );
   }

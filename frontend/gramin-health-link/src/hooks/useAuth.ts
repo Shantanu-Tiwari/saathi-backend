@@ -79,6 +79,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import { apiClient } from '@/services/api';
 
 interface User {
   id: string;
@@ -96,7 +97,7 @@ export function useAuth() {
   const logout = useCallback(() => {
     setUser(null);
     setIsAuthenticated(false);
-    localStorage.removeItem('sehat-saathi-token');
+    apiClient.setToken(null);
     setToken(null);
   }, []);
 
@@ -109,7 +110,7 @@ export function useAuth() {
     } catch (error) {
       console.error('Error decoding token:', error);
       // Clear invalid token and reset state
-      localStorage.removeItem('sehat-saathi-token');
+      apiClient.setToken(null);
       setToken(null);
       setUser(null);
       setIsAuthenticated(false);
@@ -118,16 +119,29 @@ export function useAuth() {
   }, []);
 
   const login = useCallback((token: string) => {
-    localStorage.setItem('sehat-saathi-token', token);
+    apiClient.setToken(token);
     setToken(token);
     const decodedUser = decodeAndSetUser(token);
     return decodedUser;
   }, [decodeAndSetUser]);
 
+  const requestOTP = useCallback(async (mobile: string) => {
+    return await apiClient.requestOTP(mobile);
+  }, []);
+
+  const verifyOTP = useCallback(async (mobile: string, otp: string) => {
+    const response = await apiClient.verifyOTP(mobile, otp);
+    if (response.success && response.data?.token) {
+      login(response.data.token);
+    }
+    return response;
+  }, [login]);
+
   useEffect(() => {
     const storedToken = localStorage.getItem('sehat-saathi-token');
     if (storedToken) {
       setToken(storedToken);
+      apiClient.setToken(storedToken);
       decodeAndSetUser(storedToken);
     }
     setIsLoading(false);
@@ -140,5 +154,7 @@ export function useAuth() {
     token,
     login,
     logout,
+    requestOTP,
+    verifyOTP,
   };
 }

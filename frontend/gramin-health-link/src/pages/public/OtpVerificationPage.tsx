@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 const OtpVerificationPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { verifyOTP, requestOTP } = useAuth();
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(30);
@@ -51,58 +51,28 @@ const OtpVerificationPage = () => {
 
     setIsLoading(true);
 
-    const API_URL = import.meta.env.VITE_API_URL;
-    console.log('Verifying OTP for:', phoneNumber);
-
     try {
-      const requestBody = {
-        mobile: `+91${phoneNumber}`,
-        otp: otp,
-      };
-      
-      console.log('OTP Verification Request:', requestBody);
+      const response = await verifyOTP(phoneNumber, otp);
 
-      const response = await fetch(`${API_URL}/api/v1/auth/verify-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      console.log('OTP Response status:', response.status);
-      const data = await response.json();
-      console.log('OTP Response data:', data);
-
-      if (!response.ok) {
-        throw new Error(data.message || 'गलत OTP। कृपया फिर कोशिश करें।');
+      if (response.success) {
+        localStorage.removeItem('temp-phone');
+        toast.success('लॉगिन सफल!');
+      } else {
+        toast.error(response.error || 'गलत OTP। कृपया फिर कोशिश करें।');
       }
-
-      if (!data.token) {
-        throw new Error('Authentication token not received from server');
-      }
-
-      login(data.token); // Call login and let useAuth handle redirect
-      localStorage.removeItem('temp-phone');
-
-      toast.success('लॉगिन सफल!');
-
     } catch (error) {
-      console.error('OTP Verification Error:', {
-        error: error,
-        message: error.message,
-        phoneNumber,
-        otp: otp.substring(0, 2) + '****' // Mask OTP in logs
-      });
+      console.error('OTP Verification Error:', error);
       
       let errorMessage = 'गलत OTP। कृपया फिर कोशिश करें।';
       
-      if (error.message.includes('Failed to fetch')) {
-        errorMessage = 'नेटवर्क कनेक्शन में समस्या है। कृपया इंटरनेट कनेक्शन जांचें।';
-      } else if (error.message.includes('token')) {
-        errorMessage = 'सर्वर से प्रमाणीकरण टोकन प्राप्त नहीं हुआ। कृपया फिर कोशिश करें।';
-      } else if (error.message) {
-        errorMessage = error.message;
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch')) {
+          errorMessage = 'नेटवर्क कनेक्शन में समस्या है। कृपया इंटरनेट कनेक्शन जांचें।';
+        } else if (error.message.includes('token')) {
+          errorMessage = 'सर्वर से प्रमाणीकरण टोकन प्राप्त नहीं हुआ। कृपया फिर कोशिश करें।';
+        } else {
+          errorMessage = error.message;
+        }
       }
       
       toast.error(errorMessage);
@@ -114,33 +84,20 @@ const OtpVerificationPage = () => {
   const handleResendOTP = async () => {
     setIsLoading(true);
 
-    const API_URL = import.meta.env.VITE_API_URL;
-
     try {
-      const response = await fetch(`${API_URL}/api/v1/auth/request-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          mobile: `+91${phoneNumber}`,
-        }),
-      });
+      const response = await requestOTP(phoneNumber);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'OTP दोबारा भेजने में कुछ गलत हुआ।');
+      if (response.success) {
+        setResendTimer(30);
+        setCanResend(false);
+        setOtp('');
+        toast.success('OTP दोबारा भेजा गया!');
+      } else {
+        toast.error(response.error || 'OTP दोबारा भेजने में कुछ गलत हुआ।');
       }
-
-      setResendTimer(30);
-      setCanResend(false);
-      setOtp('');
-
-      toast.success('OTP दोबारा भेजा गया!');
     } catch (error) {
       console.error('API Error:', error);
-      toast.error(error.message || 'कुछ गलत हुआ। कृपया फिर कोशिश करें।');
+      toast.error(error instanceof Error ? error.message : 'कुछ गलत हुआ। कृपया फिर कोशिश करें।');
     } finally {
       setIsLoading(false);
     }

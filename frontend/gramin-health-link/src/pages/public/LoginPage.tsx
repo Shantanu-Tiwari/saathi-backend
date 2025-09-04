@@ -6,10 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Phone, Heart } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 const LoginPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { requestOTP } = useAuth();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -21,63 +23,32 @@ const LoginPage = () => {
 
     setIsLoading(true);
 
-    const API_URL = import.meta.env.VITE_API_URL;
-    console.log('API URL:', API_URL);
-    console.log('Phone Number:', phoneNumber);
-
     try {
-      const requestBody = {
-        mobile: `+91${phoneNumber}`,
-      };
-      
-      console.log('Request body:', requestBody);
-      console.log('Full URL:', `${API_URL}/api/v1/auth/request-otp`);
+      const response = await requestOTP(phoneNumber);
 
-      const response = await fetch(`${API_URL}/api/v1/auth/request-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-      const data = await response.json();
-      console.log('Response data:', data);
-
-      if (!response.ok) {
-        throw new Error(data.message || 'OTP भेजने में कुछ गलत हुआ।');
+      if (response.success) {
+        localStorage.setItem('temp-phone', phoneNumber);
+        toast.success('OTP भेजा गया!');
+        navigate('/otp-verification');
+      } else {
+        toast.error(response.error || 'OTP भेजने में कुछ गलत हुआ।');
       }
-
-      localStorage.setItem('temp-phone', phoneNumber);
-
-      toast.success('OTP भेजा गया!');
-      navigate('/otp-verification');
-
     } catch (error) {
-      console.error('API Error Details:', {
-        error: error,
-        message: error.message,
-        stack: error.stack,
-        phoneNumber,
-        API_URL
-      });
+      console.error('API Error Details:', error);
       
-      // More specific error messages
       let errorMessage = 'कुछ गलत हुआ। कृपया फिर कोशिश करें।';
       
-      if (error.message.includes('Failed to fetch')) {
-        errorMessage = 'नेटवर्क कनेक्शन में समस्या है। कृपया इंटरनेट कनेक्शन जांचें।';
-      } else if (error.message.includes('CORS')) {
-        errorMessage = 'सर्वर कनेक्शन में समस्या है। कृपया बाद में कोशिश करें।';
-      } else if (error.message) {
-        errorMessage = error.message;
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch')) {
+          errorMessage = 'नेटवर्क कनेक्शन में समस्या है। कृपया इंटरनेट कनेक्शन जांचें।';
+        } else if (error.message.includes('CORS')) {
+          errorMessage = 'सर्वर कनेक्शन में समस्या है। कृपया बाद में कोशिश करें।';
+        } else {
+          errorMessage = error.message;
+        }
       }
       
       toast.error(errorMessage);
-
     } finally {
       setIsLoading(false);
     }

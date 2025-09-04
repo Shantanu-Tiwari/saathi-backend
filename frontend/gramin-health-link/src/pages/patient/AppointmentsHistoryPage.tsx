@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useAppointments } from '@/hooks/useAppointments';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,57 +17,12 @@ import {
 
 const AppointmentsHistoryPage = () => {
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { data: appointments = [], isLoading, error } = useAppointments();
 
-  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
-  const [pastAppointments, setPastAppointments] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const API_URL = import.meta.env.VITE_API_URL;
-
-  useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/v1/appointments/me`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.message || 'Failed to fetch appointments.');
-        }
-
-        const now = new Date();
-        const upcoming = [];
-        const past = [];
-
-        data.appointments.forEach(app => {
-          const appDate = new Date(app.date);
-          if (appDate >= now) {
-            upcoming.push(app);
-          } else {
-            past.push(app);
-          }
-        });
-
-        setUpcomingAppointments(upcoming);
-        setPastAppointments(past);
-
-      } catch (err) {
-        console.error("API Error:", err);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (token) {
-      fetchAppointments();
-    }
-  }, [token]);
+  // Separate appointments into upcoming and past
+  const now = new Date();
+  const upcomingAppointments = appointments.filter(app => new Date(app.date) >= now);
+  const pastAppointments = appointments.filter(app => new Date(app.date) < now);
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -171,7 +126,7 @@ const AppointmentsHistoryPage = () => {
   }
 
   if (error) {
-    return <div className="flex justify-center items-center min-h-screen text-red-500">Error: {error}</div>;
+    return <div className="flex justify-center items-center min-h-screen text-red-500">Error: {error.message}</div>;
   }
 
   return (
