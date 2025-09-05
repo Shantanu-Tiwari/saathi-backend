@@ -18,7 +18,7 @@ import {
 
 const PatientDashboardPage = () => {
   const navigate = useNavigate();
-  const { user, token, logout } = useAuth(); // Assuming useAuth provides the token
+  const { user, token, logout } = useAuth();
   const [currentUser, setCurrentUser] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,9 +27,14 @@ const PatientDashboardPage = () => {
   const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
+    console.log('--- Patient Dashboard useEffect running ---');
+    console.log('Auth state on component mount:', { user, token });
+
     const fetchDashboardData = async () => {
+      console.log('Starting data fetch...');
       try {
         if (!token) {
+          console.error('ERROR: No authentication token available. Redirecting to login.');
           throw new Error('No authentication token available');
         }
 
@@ -37,64 +42,59 @@ const PatientDashboardPage = () => {
           'Authorization': `Bearer ${token}`,
         };
 
-        console.log('Fetching dashboard data for user:', user?.id);
-
-        // Fetch user data from the /me endpoint
+        console.log('Fetching user data from:', `${API_URL}/api/v1/users/me`);
         const userRes = await fetch(`${API_URL}/api/v1/users/me`, { headers });
+        console.log('User data fetch response status:', userRes.status);
         const userData = await userRes.json();
-        
-        console.log('User data response:', { status: userRes.status, data: userData });
-        
+
         if (!userRes.ok) {
+          console.error('ERROR: Failed to fetch user data. Response:', userData);
           if (userRes.status === 401) {
-            // Token expired or invalid
+            console.error('User token expired. Logging out.');
             logout();
             navigate('/login');
             return;
           }
           throw new Error(userData.message || 'Failed to fetch user data.');
         }
+        console.log('SUCCESS: User data fetched:', userData);
         setCurrentUser(userData);
 
-        // Fetch appointments from a hypothetical endpoint
-        // You'll need to create this endpoint on your backend
+        console.log('Fetching appointments from:', `${API_URL}/api/v1/appointments`);
         const appointmentsRes = await fetch(`${API_URL}/api/v1/appointments`, { headers });
+        console.log('Appointments fetch response status:', appointmentsRes.status);
         const appointmentsData = await appointmentsRes.json();
-        
-        console.log('Appointments response:', { status: appointmentsRes.status, data: appointmentsData });
-        
+
         if (!appointmentsRes.ok) {
+          console.error('ERROR: Failed to fetch appointments. Response:', appointmentsData);
           if (appointmentsRes.status === 401) {
-            // Token expired or invalid
+            console.error('Appointments token expired. Logging out.');
             logout();
             navigate('/login');
             return;
           }
           throw new Error(appointmentsData.message || 'Failed to fetch appointments.');
         }
+        console.log('SUCCESS: Appointments data fetched:', appointmentsData);
         setAppointments(appointmentsData.appointments || []);
 
       } catch (err) {
-        console.error("Dashboard API Error:", err);
+        console.error("FINAL ERROR: Dashboard API Error:", err.message);
         setError(err.message);
-        
-        // If it's an authentication error, redirect to login
-        if (err.message.includes('401') || err.message.includes('token')) {
-          logout();
-          navigate('/login');
-        }
       } finally {
+        console.log('Data fetch process completed. Setting isLoading to false.');
         setIsLoading(false);
       }
     };
 
-    // Only fetch data if the user is authenticated and we have a token
     if (user && token) {
+      console.log('User and token are present. Starting fetch process.');
       fetchDashboardData();
     } else if (!user) {
-      // User not authenticated, redirect to login
+      console.log('No user detected. Redirecting to login.');
       navigate('/login');
     } else {
+      console.log('Auth check complete. No action needed.');
       setIsLoading(false);
     }
   }, [user, token, logout, navigate]);
