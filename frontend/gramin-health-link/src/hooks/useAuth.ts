@@ -1,132 +1,51 @@
 import { useState, useEffect, useCallback } from 'react';
-import { jwtDecode } from 'jwt-decode';
-import { apiClient } from '@/services/api';
 
-interface User {
-  id: string;
-  phone: string;
-  name?: string;
-  email?: string;
-  role: 'patient' | 'doctor' | 'pharmacist';
-  avatar?: string;
-}
+// Hardcoded mock data to simulate a logged-in user for the demo
+const MOCK_USER = {
+  id: 'mock-user-123',
+  phone: '1234567890',
+  name: 'Demo User',
+  email: 'demo.user@example.com',
+  role: 'patient', // Change to 'doctor' to test that dashboard
+};
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [token, setToken] = useState<string | null>(null);
+  // Hardcoded states to bypass all authentication logic
+  const [user, setUser] = useState(MOCK_USER);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [token, setToken] = useState('mock-token');
 
+  // These functions are now placeholders
   const logout = useCallback(() => {
+    console.log('Logout called - In Demo Mode, this would clear the session.');
     setUser(null);
     setIsAuthenticated(false);
-    apiClient.setToken(null);
-    setToken(null);
-    localStorage.removeItem('sehat-saathi-token');
   }, []);
 
-  const decodeAndSetUser = useCallback((token: string) => {
-    try {
-      const decoded: User = jwtDecode(token);
-      setUser(decoded);
-      setIsAuthenticated(true);
-      return decoded;
-    } catch (error) {
-      console.error('Error decoding token:', error);
-      apiClient.setToken(null);
-      setToken(null);
-      setUser(null);
-      setIsAuthenticated(false);
-      return null;
-    }
+  const login = useCallback((token, userData) => {
+    console.log('Login called - In Demo Mode, login is already hardcoded.');
+    setUser(MOCK_USER);
+    setIsAuthenticated(true);
   }, []);
 
-  const login = useCallback((token: string, userData?: User) => {
-    apiClient.setToken(token);
-    setToken(token);
-
-    if (userData) {
-      setUser(userData);
-      setIsAuthenticated(true);
-      localStorage.setItem('sehat-saathi-token', token);
-      return userData;
-    } else {
-      const decodedUser = decodeAndSetUser(token);
-      return decodedUser;
-    }
-  }, [decodeAndSetUser]);
-
-  const requestOTP = useCallback(async (mobile: string) => {
-    return await apiClient.requestOTP(mobile);
+  const requestOTP = useCallback(async (mobile) => {
+    console.log('requestOTP called - Bypassed in demo mode.');
+    return { success: true, data: { message: 'OTP sent' } };
   }, []);
 
-  const verifyOTP = useCallback(async (mobile: string, otp: string) => {
-    const response = await apiClient.verifyOTP(mobile, otp);
-
-    if (response.success && response.data?.token) {
-      if (response.data.user) {
-        const userData = {
-          id: response.data.user.id,
-          phone: mobile,
-          name: response.data.user.name,
-          role: response.data.user.role
-        };
-        login(response.data.token, userData);
-      } else {
-        login(response.data.token);
-      }
-    }
-    return response;
+  const verifyOTP = useCallback(async (mobile, otp) => {
+    console.log('verifyOTP called - Bypassed in demo mode.');
+    return { success: true, data: { token: 'mock-token', user: MOCK_USER } };
   }, [login]);
 
-  const loginWithGoogle = useCallback(async (credential: string) => {
-    const response = await apiClient.verifyGoogleCredential(credential);
-
-    if (response.success && response.data?.token) {
-      const userData = {
-        id: response.data.user.id,
-        phone: response.data.user.phone || '',
-        name: response.data.user.name,
-        email: response.data.user.email,
-        role: response.data.user.role,
-        avatar: response.data.user.avatar
-      };
-      login(response.data.token, userData);
-    }
-    return response;
+  const loginWithGoogle = useCallback(async (credential) => {
+    console.log('loginWithGoogle called - Bypassed in demo mode.');
+    return { success: true, data: { token: 'mock-token', user: MOCK_USER } };
   }, [login]);
 
-  // Initial authentication check on component mount
-  useEffect(() => {
-    const initializeAuth = async () => {
-      const storedToken = localStorage.getItem('sehat-saathi-token');
-      if (storedToken) {
-        apiClient.setToken(storedToken);
-        setToken(storedToken);
-        try {
-          const response = await apiClient.getMe();
-          if (response.success && response.data) {
-            const userData = {
-              id: response.data._id || response.data.id,
-              phone: response.data.phone,
-              name: response.data.name,
-              role: response.data.role
-            };
-            setUser(userData);
-            setIsAuthenticated(true);
-          } else {
-            logout();
-          }
-        } catch (error) {
-          console.error('Error initializing auth:', error);
-          logout();
-        }
-      }
-      setIsLoading(false);
-    };
-
-    initializeAuth();
-  }, []); // Empty dependency array to run only once
+  // The useEffect hook is no longer needed to check auth state
+  // as it is now hardcoded.
 
   return {
     user,
