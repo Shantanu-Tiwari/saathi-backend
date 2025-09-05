@@ -1,76 +1,105 @@
 import { useState, useEffect, useCallback } from 'react';
 // import { jwtDecode } from 'jwt-decode';
 
-// Hardcoded data to simulate a successful OTP verification for the demo
-const MOCK_PHONE = '1234567890';
-const MOCK_OTP = '123456';
-
-const MOCK_USER = {
-  id: 'mock-user-123',
-  phone: MOCK_PHONE,
-  name: 'Demo User',
-  email: 'demo.user@example.com',
-  role: 'patient', // Change to 'doctor' to test that dashboard
-};
+// NOTE: You must replace this with your actual backend URL.
+// The hardcoded value is a placeholder from our previous conversation.
+const API_URL = "https://saathi-backend-2.onrender.com";
 
 export function useAuth() {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [token, setToken] = useState(null);
 
-  // This is a placeholder as no backend is being called
   const logout = useCallback(() => {
-    console.log('Logout called - In Demo Mode, this would clear the session.');
     setUser(null);
     setIsAuthenticated(false);
     setToken(null);
+    localStorage.removeItem('sehat-saathi-token');
   }, []);
 
-  // This is a placeholder as no backend is being called
   const login = useCallback((token, userData) => {
-    console.log('Login called - In Demo Mode, login is already handled by verifyOTP.');
-    setUser(MOCK_USER);
+    localStorage.setItem('sehat-saathi-token', token);
+    setUser(userData);
     setIsAuthenticated(true);
     setToken(token);
   }, []);
 
   const requestOTP = useCallback(async (mobile) => {
-    console.log('requestOTP called - Bypassed in demo mode.');
-    if (mobile === MOCK_PHONE) {
-      // Simulate success for the correct phone number
-      return { success: true, data: { message: `OTP sent to ${mobile}` } };
+    try {
+      const response = await fetch(`${API_URL}/api/v1/auth/request-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile }),
+      });
+      const data = await response.json();
+      return { success: response.ok, data, error: !response.ok ? data.message : null };
+    } catch (error) {
+      console.error('Error requesting OTP:', error);
+      return { success: false, error: 'Network error or server unavailable.' };
     }
-    // Simulate failure for any other number
-    return { success: false, error: 'Invalid phone number.' };
   }, []);
 
   const verifyOTP = useCallback(async (mobile, otp) => {
-    console.log('verifyOTP called - Bypassed in demo mode.');
-    // Check for hardcoded phone and OTP
-    if (mobile === MOCK_PHONE && otp === MOCK_OTP) {
-      console.log('✅ OTP verification successful - Simulating login.');
-      // Simulate a successful API response
-      const response = {
-        success: true,
-        data: {
-          token: 'mock-token',
-          user: MOCK_USER,
-        },
-      };
-      // Call the login function with the mock data
-      login(response.data.token, response.data.user);
-      return response;
-    } else {
-      console.log('❌ OTP verification failed - Invalid phone or OTP.');
-      return { success: false, error: 'Invalid OTP.' };
+    try {
+      const response = await fetch(`${API_URL}/api/v1/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile, otp }),
+      });
+      const data = await response.json();
+
+      if (response.ok && data.token) {
+        // Assume user data is also returned with the token
+        const userData = {
+          id: data.user.id,
+          phone: mobile,
+          name: data.user.name,
+          role: data.user.role,
+        };
+        login(data.token, userData);
+      }
+      return { success: response.ok, data, error: !response.ok ? data.message : null };
+    } catch (error) {
+      console.error('Error verifying OTP:', error);
+      return { success: false, error: 'Network error or server unavailable.' };
     }
   }, [login]);
 
-  // This hook now only runs once to set the initial loading state
+  // Initial authentication check
   useEffect(() => {
-    setIsLoading(false);
-  }, []);
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem('sehat-saathi-token');
+      if (storedToken) {
+        try {
+          const response = await fetch(`${API_URL}/api/v1/users/me`, {
+            headers: { 'Authorization': `Bearer ${storedToken}` }
+          });
+          const data = await response.json();
+
+          if (response.ok) {
+            const userData = {
+              id: data._id || data.id,
+              phone: data.phone,
+              name: data.name,
+              role: data.role,
+            };
+            setUser(userData);
+            setIsAuthenticated(true);
+            setToken(storedToken);
+          } else {
+            logout();
+          }
+        } catch (error) {
+          console.error('Error initializing auth:', error);
+          logout();
+        }
+      }
+      setIsLoading(false);
+    };
+
+    initializeAuth();
+  }, [logout]);
 
   return {
     user,
