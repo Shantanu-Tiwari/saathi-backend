@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-// import { jwtDecode } from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 // NOTE: You must replace this with your actual backend URL.
 // The hardcoded value is a placeholder from our previous conversation.
